@@ -1,0 +1,204 @@
+{
+  "name": "TaskFlow Intelligence: Automated Daily Task Summarization System",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -960,
+        -288
+      ],
+      "id": "0b037b5a-53b1-4a8f-ad42-a1d83a1af9c3",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "tasks",
+        "returnAll": true,
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "due_data",
+              "condition": "gte",
+              "keyValue": "={{ $now.toISO().split(\"T\")[0] }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -752,
+        -288
+      ],
+      "id": "05fa1cc5-dbc9-4741-99b0-624c94e79841",
+      "name": "Get many rows",
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "aoUsX3MHT8SHsLzg",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4.1-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are a helpful assistant summarizing task lists for the day.",
+              "role": "system"
+            },
+            {
+              "content": "=Summarize and prioritize the following tasks for today. Mention if any are overdue. Format the output as a short report.\n\n{{ JSON.stringify($json) }}\n",
+              "role": "assistant"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        -544,
+        -288
+      ],
+      "id": "f339ed7e-901a-4480-b741-554781dbe168",
+      "name": "Message a model",
+      "credentials": {
+        "openAiApi": {
+          "id": "TdvAQq1omZmKq437",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "pageId": {
+          "__rl": true,
+          "value": "https://www.notion.so/Welcome-to-Notion-23aae07a30318022bffee71b4f2f5b81",
+          "mode": "url"
+        },
+        "title": "Today's Tasks Summary",
+        "blockUi": {
+          "blockValues": [
+            {
+              "textContent": "={{ $json.message.content }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        -192,
+        -288
+      ],
+      "id": "79f4cea4-a10b-432a-a402-4fbc20bd593f",
+      "name": "Create a page",
+      "credentials": {
+        "notionApi": {
+          "id": "vh4t6bWcSmfNS8VN",
+          "name": "Notion account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "m.hasan.saleh22@gmail.com",
+        "subject": "Morning Briefing",
+        "emailType": "text",
+        "message": "={{ $json.id }}{{ $json.name }}{{ $json.url }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        16,
+        -288
+      ],
+      "id": "be88e5cb-e58b-456d-b566-015863d404b5",
+      "name": "Send a message",
+      "webhookId": "e4c3e761-6615-434e-9f1b-45c5365aef10",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "FvMLP5ChQjWkpcZc",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Get many rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many rows": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Create a page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a page": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "08c8874f-f1aa-4fe9-84cc-c22a4fada0dc",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b4e1b0bc7c3a7b959606a3740b4f13ba163475877b82a14eacc750e0619b37bb"
+  },
+  "id": "tgJwwDpzr0HoXJfg",
+  "tags": []
+}
